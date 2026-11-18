@@ -6,7 +6,7 @@ from .version import __version__
 
 # Minimum aqua-core version implementing the plugin contract v2.
 # TODO: raise to 1.3.0 before releasing aqua-claima 0.1.0
-MIN_AQUA_CORE = "1.2.5"
+MIN_AQUA_CORE = "1.2.4"
 
 PLUGIN_CONTRACT = 2
 CONFIG_DIRECTORIES = ["analysis", "collections", "tools"]

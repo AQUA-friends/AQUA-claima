@@ -38,7 +38,7 @@ def test_contract_shape(recent_core):
 def test_old_core_rejected(monkeypatch):
     import aqua.core
 
-    monkeypatch.setattr(aqua.core, "__version__", "1.2.4")
+    monkeypatch.setattr(aqua.core, "__version__", "1.2.3")
     with pytest.raises(RuntimeError, match=f"aqua-claima requires aqua-core>={MIN_AQUA_CORE}"):
         get_install_dirs()
 

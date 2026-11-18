@@ -11,5 +11,5 @@ All notable changes to aqua-claima are documented here.
 - Tests for the namespace package, the contract shape and the presence of the listed config folders.
 
 ### Notes
-- Soft version pins: `aqua-core>=1.2.5` (pyproject and `MIN_AQUA_CORE`) and `aqua-diagnostics>=0.26.0`.
+- Soft version pins: `aqua-core>=1.2.4` (pyproject and `MIN_AQUA_CORE`) and `aqua-diagnostics>=0.26.0`.
   They must be raised to `aqua-core>=1.3.0` and `aqua-diagnostics>=0.27.0` before releasing 0.1.0.
