@@ -1,0 +1,8 @@
+# Example CLAIMA grid, used to test the aqua-core plugin contract v2:
+# this file is copied as is into the flat ~/.aqua/grids folder.
+# The grid name is prefixed with "claima-" so it cannot collide with core grids.
+
+grids:
+  claima-example-r100:
+    path: "{{ grids }}/CLAIMA/claima-example-r100.nc"
+    space_coord: ["lat", "lon"]
