@@ -13,7 +13,8 @@ Work in progress: requires the aqua-core version implementing the plugin contrac
 
 ```bash
 pip install -e .
-aqua install <machine> --claima
+aqua install <machine> -c                  # aqua-core configuration, if not installed yet
+aqua project install claima                # or: aqua project install claima -e <path-to-AQUA-claima> (editable)
 ```
 
 ## Tests
