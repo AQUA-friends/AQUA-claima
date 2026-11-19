@@ -1,0 +1,323 @@
+name: AQUA-claima Test Runner (Reusable)
+# Adapted from aqua-diagnostics-test-reusable.yml: one job (one platform, one Python, one install mode).
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'Python version to test'
+        required: false
+        type: string
+        default: '3.14'
+      platform:
+        description: 'GitHub Actions runner label'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      container-image:
+        description: 'Container image to use (empty string = selected host runner, e.g. on macOS)'
+        required: false
+        type: string
+        default: 'ghcr.io/destine-climate-dt/ubuntu26.04-fdb5.19.0-eccodes2.47.0-aqua:aqua-base-container'
+      pytest-markers:
+        description: 'Pytest markers to run'
+        required: false
+        type: string
+        default: 'claima'
+      pytest-timeout-seconds:
+        description: 'Per-test pytest timeout in seconds (applied only when pytest-timeout is installed)'
+        required: false
+        type: string
+        default: '600'
+      enable-parallel:
+        description: 'Enable pytest-xdist parallel execution'
+        required: false
+        type: boolean
+        default: false
+      enable-coverage:
+        description: 'Enable code coverage reporting'
+        required: false
+        type: boolean
+        default: true
+      install-mode:
+        description: >-
+          Installation mode: "local" (conda-lock file, Linux only),
+          "cross-check" (environment.yml + aqua-core and aqua-diagnostics from git refs),
+          "pypi" (environment-pypi.yml + aqua-claima from PyPI + its release tag)
+        required: false
+        type: string
+        default: 'local'
+      aqua-core-ref:
+        description: 'aqua-core branch/tag/commit-SHA for cross-check mode'
+        required: false
+        type: string
+        default: 'main'
+      aqua-diagnostics-ref:
+        description: 'aqua-diagnostics branch/tag/commit-SHA for cross-check mode'
+        required: false
+        type: string
+        default: 'main'
+      test-data-source:
+        description: 'Test data source: "dvc" (DVC only), "http" (wget only), or "auto" (DVC with HTTP fallback)'
+        required: false
+        type: string
+        default: 'auto'
+      aqua-actions-ref:
+        description: 'aqua-core repository ref containing the composite CI actions'
+        required: false
+        type: string
+        default: 'main'
+    secrets:
+      AQUA_GITHUB_PAT:
+        required: true
+      AQUA_DVC_PAT:
+        required: true
+      AQUA_DVC_PEM:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      POLYTOPE_KEY:
+        required: true
+      CODECOV_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    # login shell: micromamba/setup-micromamba writes the activation script in .bashrc
+    shell: bash -l -eo pipefail {0}
+
+jobs:
+  aqua_test:
+    name: aqua_test (${{ inputs.install-mode }}, ${{ inputs.python-version }})
+    runs-on: ${{ inputs.platform }}
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}-${{ inputs.install-mode }}-${{ inputs.platform }}-py${{ inputs.python-version }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+    container:
+      # FDB container used as build environment on Linux, as in aqua-diagnostics
+      image: ${{ inputs.container-image }}
+      options: --user root
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      GRID_DEFINITION_PATH: /tmp
+      GITHUB_TOKEN: ${{ secrets.AQUA_GITHUB_PAT || github.token }}
+      ARTIFACT_SUFFIX: ${{ inputs.install-mode }}-${{ inputs.platform }}-py${{ inputs.python-version }}
+
+    steps:
+      # ========================================
+      # 1. CHECKOUT REPOSITORIES
+      # ========================================
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          path: AQUA-claima
+
+      - name: Checkout aqua-core (cross-check mode)
+        if: ${{ inputs.install-mode == 'cross-check' }}
+        uses: actions/checkout@v7
+        with:
+          repository: DestinE-Climate-DT/AQUA
+          ref: ${{ inputs.aqua-core-ref }}
+          path: AQUA
+          token: ${{ secrets.AQUA_GITHUB_PAT || github.token }}
+
+      - name: Checkout aqua-diagnostics (cross-check mode)
+        if: ${{ inputs.install-mode == 'cross-check' }}
+        uses: actions/checkout@v7
+        with:
+          repository: DestinE-Climate-DT/AQUA-diagnostics
+          ref: ${{ inputs.aqua-diagnostics-ref }}
+          path: AQUA-diagnostics
+          token: ${{ secrets.AQUA_GITHUB_PAT || github.token }}
+
+      - name: Checkout shared AQUA CI actions
+        uses: actions/checkout@v7
+        with:
+          repository: DestinE-Climate-DT/AQUA
+          ref: ${{ inputs.aqua-actions-ref }}
+          path: aqua-ci
+          token: ${{ secrets.AQUA_GITHUB_PAT || github.token }}
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+
+      - name: Checkout DVC repo
+        uses: actions/checkout@v7
+        with:
+          repository: DestinE-Climate-DT/aqua-dvc
+          path: aqua-dvc
+          token: ${{ secrets.AQUA_DVC_PAT }}
+
+      # ========================================
+      # 2. INSTALL SYSTEM DEPENDENCIES
+      # ========================================
+      - name: Install GH Actions dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          SUDO=$([ "$(id -u)" = "0" ] && echo "" || echo "sudo")
+          $SUDO apt-get update && $SUDO apt-get install -y curl git jq gpg
+
+      - name: Install GH Actions dependencies (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        run: brew install wget cdo
+
+      # ========================================
+      # 3. SETUP PYTHON ENVIRONMENT
+      # ========================================
+      - name: Resolve environment for install mode
+        id: resolve
+        env:
+          MODE: ${{ inputs.install-mode }}
+        run: |
+          case "$MODE" in
+            local)
+              if [ "$RUNNER_OS" != "Linux" ]; then
+                echo "::error::install-mode 'local' uses a linux-64 lock file"
+                exit 1
+              fi
+              if [ ! -f AQUA-claima/conda-linux-64.lock ]; then
+                echo "::error::conda-linux-64.lock not found: run the 'relock conda' workflow first"
+                exit 1
+              fi
+              ENV_FILE=AQUA-claima/conda-linux-64.lock
+              ;;
+            cross-check)
+              # pip resolves '-e .' against the cwd, so point it to the checkout explicitly
+              ENV_FILE="$RUNNER_TEMP/environment.yml"
+              sed "s#- -e \.#- -e ${GITHUB_WORKSPACE}/AQUA-claima#" AQUA-claima/environment.yml > "$ENV_FILE"
+              grep -q "${GITHUB_WORKSPACE}/AQUA-claima" "$ENV_FILE" || { echo "::error::'-e .' not found in environment.yml"; exit 1; }
+              ;;
+            pypi)
+              ENV_FILE=AQUA-claima/environment-pypi.yml
+              ;;
+            *)
+              echo "::error::Unknown install-mode '$MODE'"
+              exit 1
+              ;;
+          esac
+          echo "env-file=$ENV_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Micromamba
+        uses: mamba-org/setup-micromamba@v3
+        env:
+          GITHUB_TOKEN: ''
+        with:
+          micromamba-version: 'latest'
+          environment-file: ${{ steps.resolve.outputs.env-file }}
+          environment-name: aqua-claima
+          generate-run-shell: false
+          cache-downloads: true
+          cache-environment: false
+          post-cleanup: 'none'
+          create-args: >-
+            python=${{ inputs.python-version }}
+
+      # ========================================
+      # 4. INSTALL AQUA-CLAIMA ON TOP OF THE ENVIRONMENT
+      # ========================================
+      - name: Install AQUA-claima (local mode)
+        if: ${{ inputs.install-mode == 'local' }}
+        run: |
+          cd AQUA-claima
+          sed -n 's/^# pip //p' conda-linux-64.lock | python -m pip install -r /dev/stdin
+          python -m pip install --no-deps -e .
+
+      - name: Install aqua-core and aqua-diagnostics from the checked-out refs (cross-check mode)
+        if: ${{ inputs.install-mode == 'cross-check' }}
+        # Replaces the released aqua-core (conda-forge) and aqua-diagnostics (PyPI) installed by environment.yml
+        run: |
+          python -m pip install -e "${GITHUB_WORKSPACE}/AQUA[fdb]"
+          python -m pip install -e "${GITHUB_WORKSPACE}/AQUA-diagnostics"
+
+      - name: Install aqua-claima from PyPI (PyPI mode)
+        if: ${{ inputs.install-mode == 'pypi' }}
+        run: |
+          python -m pip install "aqua-claima[tests]"
+          cd AQUA-claima
+          PYPI_VERSION=$(python -c "import importlib.metadata; print(importlib.metadata.version('aqua-claima'))")
+          git fetch --tags --quiet
+          git checkout "v${PYPI_VERSION}"
+
+      # ========================================
+      # 5. SETUP TEST DATA AND AQUA
+      # ========================================
+      - name: Set up test data
+        uses: ./aqua-ci/.github/actions/setup-test-data
+        with:
+          data-source: ${{ inputs.test-data-source }}
+          dvc-repository-path: aqua-dvc
+          test-data-path: AQUA-claima/AQUA_tests
+          dvc-pem: ${{ secrets.AQUA_DVC_PEM }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Set up AQUA configuration
+        uses: ./aqua-ci/.github/actions/setup-aqua
+        with:
+          catalogs: |
+            ci
+          polytope-key: ${{ secrets.POLYTOPE_KEY }}
+
+      # ========================================
+      # 6. VERIFY INSTALLATIONS
+      # ========================================
+      - name: Verify aqua-core, aqua-diagnostics and aqua-claima versions
+        env:
+          MODE: ${{ inputs.install-mode }}
+          CORE_REF: ${{ inputs.aqua-core-ref }}
+          DIAGNOSTICS_REF: ${{ inputs.aqua-diagnostics-ref }}
+        run: |
+          echo "install-mode: $MODE"
+          if [ "$MODE" = "cross-check" ]; then
+            echo "aqua-core ref: $CORE_REF, aqua-diagnostics ref: $DIAGNOSTICS_REF"
+          fi
+          python -c "import aqua.core, aqua.diagnostics, aqua.claima; print('aqua-core', aqua.core.__version__, '| aqua-diagnostics', aqua.diagnostics.__version__, '| aqua-claima', aqua.claima.__version__)"
+          cd AQUA-claima
+          micromamba list > micromamba_list.txt
+          pip freeze > pip_freeze.txt
+
+      # ========================================
+      # 7. RUN TESTS
+      # ========================================
+      - name: Run tests
+        timeout-minutes: 30
+        env:
+          MARKERS: ${{ inputs.pytest-markers }}
+          PARALLEL: ${{ inputs.enable-parallel }}
+          COVERAGE: ${{ inputs.enable-coverage }}
+          PYTEST_TIMEOUT_SECONDS: ${{ inputs.pytest-timeout-seconds }}
+        run: |
+          cd AQUA-claima
+          ARGS=(--junitxml=junit.xml -o junit_family=legacy -m "$MARKERS" -rs)
+          if python -c "import pytest_timeout" 2>/dev/null; then
+            ARGS+=(--timeout="$PYTEST_TIMEOUT_SECONDS")
+          fi
+          if [ "$PARALLEL" = "true" ]; then
+            ARGS+=(-n 4 --dist loadgroup --max-worker-restart=0)
+          fi
+          if [ "$COVERAGE" = "true" ]; then
+            ARGS+=(--cov)
+          fi
+          echo "pytest ${ARGS[*]}"
+          pytest "${ARGS[@]}" 2>&1 | tee aqua_pytest.log
+
+      # ========================================
+      # 8. COVERAGE REPORTS AND ARTIFACTS
+      # ========================================
+      - name: Collect pytest reports and upload artifacts
+        if: ${{ !cancelled() }}
+        uses: ./aqua-ci/.github/actions/pytest-reports
+        with:
+          project-path: AQUA-claima
+          enable-parallel: ${{ inputs.enable-parallel }}
+          enable-coverage: ${{ inputs.enable-coverage }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-name: codecov-aqua-claima
+          artifact-name: aqua-test-artifacts-${{ env.ARTIFACT_SUFFIX }}

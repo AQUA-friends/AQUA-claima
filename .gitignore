@@ -1,6 +1,35 @@
+# general
+*.pyc
 __pycache__/
-*.egg-info/
-.pytest_cache/
-.ruff_cache/
+.ipynb_checkpoints
+*.egg-info
+*.DS_Store
+
+# logfiles
+*.err
+*.out
+*.log
+
+# build
 build/
 dist/
+.eggs/
+
+# output
+*.nc
+*.png
+*.pdf
+*.svg
+
+# tests
+AQUA_tests/
+.pytest_cache/
+.ruff_cache/
+.env
+
+# coverage and vscode
+.coverage
+coverage.xml
+coverage/
+junit.xml
+.vscode/*

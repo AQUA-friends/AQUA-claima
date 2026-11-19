@@ -31,9 +31,17 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
-    "pytest",
+    "pytest<9.2",  # as aqua-diagnostics: pytest 9.2 breaks xdist 3.8 loadgroup
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-xdist",
+    "pytest-timeout",
+    "coverage",
+    "dvc>3.60.0",
+    "dvc-s3"
 ]
 style = [
+    "pre-commit",
     "ruff==0.17.4"
 ]
 
@@ -58,12 +66,19 @@ include = ["aqua*"]
 version = {attr = "aqua.claima.version.__version__"}
 
 [tool.pytest.ini_options]
-addopts = "-v"
+addopts = "--durations=10 -v"
 testpaths = [
     "tests"
 ]
 markers = [
     "claima: tests for the aqua-claima package",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["aqua/claima"]
+omit = [
+    "tests/*",
 ]
 
 [tool.ruff]
@@ -80,3 +95,9 @@ known-first-party = ["aqua"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.conda-lock]
+default-non-conda-source = "pip"
+platforms = [
+    "linux-64",
+]

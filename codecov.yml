@@ -1,0 +1,14 @@
+# codecov.yml
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0.1%  # Allow a 0.1% drop without failing
+
+ignore:
+  - "tests/*"          # Ignore test files
+
+comment:
+  layout: "diff, flags"
+  require_changes: true

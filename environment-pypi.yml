@@ -1,0 +1,16 @@
+# this is the minimal environment file to install the dependencies of AQUA-claima,
+# it is not meant to be used directly but is used by github actions
+# Create the environment:
+# mamba env create -f environment-pypi.yml
+# then install AQUA-claima with pip, e.g. pip install aqua-claima
+# (aqua-core is already installed from conda-forge, pip installs aqua-diagnostics and aqua-claima)
+
+name: aqua-claima
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  # keep the version in sync with pyproject.toml (TODO: aqua-core>=1.3.0 before releasing aqua-claima 0.1.0)
+  - aqua-core>=1.2.4,<1.4.0
+  - esmpy
+  - pip

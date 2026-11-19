@@ -31,6 +31,14 @@ def test_namespace():
     assert Path(aqua.claima.__file__).parent.parent.name == "aqua"
 
 
+def test_namespace_diagnostics():
+    """aqua.claima, aqua.core and aqua.diagnostics are importable in one process."""
+    diagnostics = pytest.importorskip("aqua.diagnostics", reason="aqua-diagnostics is not installed")
+    import aqua.core
+
+    assert diagnostics.__version__ and aqua.core.__version__ and aqua.claima.__version__
+
+
 def test_contract_shape(recent_core):
     assert get_install_dirs() == EXPECTED
 

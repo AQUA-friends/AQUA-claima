@@ -24,6 +24,8 @@ job:
 
     script_path_base: "${AQUA_DIAGNOSTICS}"  # Base directory for the diagnostic scripts
 
+    experiment_kind: "${AQUA_CONFIG}/analysis/${AQUA_PROJECT}/claima-experiment-kind.yaml"  # experiment kind file
+
 cluster:  # options for dask cluster
     workers: 8
     threads: 1  # per worker
@@ -33,9 +35,11 @@ cluster:  # options for dask cluster
 # List of available CLI tools (diagnostics)
 cli:
   biases: "biases/cli_biases.py"
+  gregory: "timeseries/cli_timeseries.py"
   timeseries: "timeseries/cli_timeseries.py"
 
 run:
+    - ["climate_metrics"]
     - ["atmosphere2d"]
 
 diagnostics:
@@ -44,3 +48,7 @@ diagnostics:
       config: "${AQUA_CONFIG}/collections/${AQUA_PROJECT}/jinja/atmosphere2d/config-atmosphere2d-era5.j2"
     timeseries:
       config: "${AQUA_CONFIG}/collections/${AQUA_PROJECT}/jinja/atmosphere2d/config-atmosphere2d-era5.j2"
+
+  climate_metrics:
+    gregory:
+      config: "${AQUA_CONFIG}/collections/${AQUA_PROJECT}/jinja/climate_metrics/config-climate_metrics-gregory.j2"

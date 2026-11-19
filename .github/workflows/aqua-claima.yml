@@ -1,0 +1,74 @@
+name: AQUA-claima tests
+# Adapted from aqua-diagnostics.yml. Runs on PRs labelled 'run tests', 'ready for review' or 'ready to merge',
+# on Dependabot PRs, on push to main, or manually (with a chosen install mode and refs).
+# Until aqua-core 1.3.0 and aqua-diagnostics 0.27.0 are released, the default mode is 'cross-check':
+# aqua-core and aqua-diagnostics are installed from their project-support stack branches.
+# TODO: switch the default to 'local' after the release (WP6 of DestinE-Climate-DT/AQUA#3278).
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    # 'labeled' is not a default activity type: without it, adding a label does not trigger this workflow
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      install_mode:
+        description: 'Install mode: local, cross-check or pypi'
+        required: false
+        default: 'cross-check'
+        type: string
+      aqua_core_ref:
+        description: 'aqua-core branch/tag/commit to test against (cross-check mode)'
+        required: false
+        default: 'project-analysis-rebuild'
+        type: string
+      aqua_diagnostics_ref:
+        description: 'aqua-diagnostics branch/tag/commit to test against (cross-check mode)'
+        required: false
+        default: 'project-support'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  aqua-claima-tests:
+    # Non-PR events always run. On PRs:
+    #  - opened/synchronize/reopened: run if the PR is from Dependabot or has one of the test labels
+    #  - labeled: run only if the label just added is one of the test labels, so that adding
+    #    an unrelated label does not restart (and cancel) tests already running
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event.action != 'labeled' && (
+        github.event.pull_request.user.login == 'dependabot[bot]' ||
+        contains(format('|{0}', join(github.event.pull_request.labels.*.name, '|')), '|run tests') ||
+        contains(format('|{0}', join(github.event.pull_request.labels.*.name, '|')), '|ready for review') ||
+        contains(format('|{0}', join(github.event.pull_request.labels.*.name, '|')), '|ready to merge'))) ||
+      (github.event.action == 'labeled' && (
+        startsWith(github.event.label.name, 'run tests') ||
+        startsWith(github.event.label.name, 'ready for review') ||
+        startsWith(github.event.label.name, 'ready to merge')))
+    uses: ./.github/workflows/aqua-claima-test-reusable.yml
+    with:
+      python-version: '3.14'
+      pytest-markers: 'claima'
+      enable-coverage: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+      install-mode: ${{ inputs.install_mode || 'cross-check' }}
+      # project-analysis-rebuild: top of the aqua-core project-support stack (DestinE-Climate-DT/AQUA#3416, #3418);
+      # switch to project-support once both are merged there
+      aqua-core-ref: ${{ inputs.aqua_core_ref || 'project-analysis-rebuild' }}
+      aqua-diagnostics-ref: ${{ inputs.aqua_diagnostics_ref || 'project-support' }}
+      # setup-aqua of AQUA main still uses the removed `aqua add`: take the composite actions from the same core ref
+      aqua-actions-ref: ${{ inputs.aqua_core_ref || 'project-analysis-rebuild' }}
+      test-data-source: 'auto'
+    secrets:
+      AQUA_GITHUB_PAT: ${{ secrets.AQUA_GITHUB_PAT }}
+      AQUA_DVC_PAT: ${{ secrets.AQUA_DVC_PAT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      POLYTOPE_KEY: ${{ secrets.POLYTOPE_KEY }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      AQUA_DVC_PEM: ${{ secrets.AQUA_DVC_PEM }}

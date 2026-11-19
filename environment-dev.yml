@@ -1,0 +1,21 @@
+# Development environment with aqua-core, aqua-diagnostics and aqua-claima in editable mode.
+# Clone AQUA and AQUA-diagnostics next to AQUA-claima, then:
+# mamba env create -f environment-dev.yml
+
+name: aqua-claima-dev
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  # aqua-core from conda-forge brings python, smmregrid (and CDO on Linux), eccodes, cartopy, netcdf4, hdf5, h5py
+  # keep the version in sync with pyproject.toml (TODO: aqua-core>=1.3.0 before releasing aqua-claima 0.1.0)
+  - aqua-core>=1.2.4,<1.4.0
+  - cartopy_offlinedata # this is needed for MN5 HPC
+  - python-dateutil<3 # botocore requires python-dateutil<3
+  - esmpy<=8.9.1
+  - pip
+  - pip:
+    # replace the aqua-core release from conda-forge and aqua-diagnostics from PyPI with the local checkouts
+    - -e ../AQUA[fdb]
+    - -e ../AQUA-diagnostics
+    - -e .[style,tests]
