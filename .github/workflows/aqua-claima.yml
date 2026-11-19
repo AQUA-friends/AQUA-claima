@@ -22,7 +22,7 @@ on:
       aqua_core_ref:
         description: 'aqua-core branch/tag/commit to test against (cross-check mode)'
         required: false
-        default: 'project-verbs'
+        default: 'project-analysis-rebuild'
         type: string
       aqua_diagnostics_ref:
         description: 'aqua-diagnostics branch/tag/commit to test against (cross-check mode)'
@@ -57,9 +57,12 @@ jobs:
       pytest-markers: 'claima'
       enable-coverage: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
       install-mode: ${{ inputs.install_mode || 'cross-check' }}
-      # project-verbs: aqua-core PR3b of the project-support stack; switch to project-support once it is merged there
-      aqua-core-ref: ${{ inputs.aqua_core_ref || 'project-verbs' }}
+      # project-analysis-rebuild: top of the aqua-core project-support stack (DestinE-Climate-DT/AQUA#3416, #3418);
+      # switch to project-support once both are merged there
+      aqua-core-ref: ${{ inputs.aqua_core_ref || 'project-analysis-rebuild' }}
       aqua-diagnostics-ref: ${{ inputs.aqua_diagnostics_ref || 'project-support' }}
+      # setup-aqua of AQUA main still uses the removed `aqua add`: take the composite actions from the same core ref
+      aqua-actions-ref: ${{ inputs.aqua_core_ref || 'project-analysis-rebuild' }}
       test-data-source: 'auto'
     secrets:
       AQUA_GITHUB_PAT: ${{ secrets.AQUA_GITHUB_PAT }}

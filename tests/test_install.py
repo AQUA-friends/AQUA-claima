@@ -20,13 +20,6 @@ pytestmark = pytest.mark.claima
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CONFIG_ROOT)))
 
-SKIP_VERBS = "`aqua project install/update/remove` and extra files land in aqua-core PR3b (branch project-verbs)"
-
-
-def _has_project_verbs():
-    """True if `aqua project update` is implemented, i.e. aqua-core has PR3b of the project-support stack."""
-    return AquaConsole().command_map["project"]["update"].__name__ != "project_not_implemented"
-
 
 @pytest.fixture
 def aqua(monkeypatch, tmp_path):
@@ -44,14 +37,21 @@ def aqua(monkeypatch, tmp_path):
     return run
 
 
+def _install(aqua):
+    """aqua-core configuration only, then claima as a project."""
+    aqua("install", "github", "--core")
+    aqua("project", "install", PROJECT)
+
+
 def _active_project(configdir):
     return load_yaml(os.path.join(configdir, "config-aqua.yaml")).get(PROJECT_KEY)
 
 
 @pytest.mark.parametrize("editable", [False, True], ids=["standard", "editable"])
 def test_install_layout(aqua, editable):
-    """`aqua install github --core --claima [path]` creates the nested project folders and selects claima."""
-    aqua("install", "github", "--core", "--claima", *([REPO_ROOT] if editable else []))
+    """`aqua project install claima [-e path]` creates the nested project folders and selects claima."""
+    aqua("install", "github", "--core")
+    aqua("project", "install", PROJECT, *(["-e", REPO_ROOT] if editable else []))
 
     for folder in PROJECT_FOLDERS:
         target = os.path.join(aqua.configdir, folder, PROJECT)
@@ -63,16 +63,16 @@ def test_install_layout(aqua, editable):
     assert not os.path.exists(os.path.join(aqua.configdir, "catgen", PROJECT)), "catgen is not project-scoped"
     assert _active_project(aqua.configdir) == PROJECT
 
-    if not _has_project_verbs():
-        pytest.skip(f"extra grid file not checked: {SKIP_VERBS}")
-    assert os.path.isfile(os.path.join(aqua.configdir, "grids", "claima-example.yaml"))
+    grid = os.path.join(aqua.configdir, "grids", "claima-example.yaml")
+    assert os.path.isfile(grid)
+    assert os.path.islink(grid) == editable
 
 
 def test_project_set_list_uninstall(aqua, capsys):
-    aqua("install", "github", "--core", "--claima")
+    _install(aqua)
     configfile = os.path.join(aqua.configdir, "config-aqua.yaml")
     dump_yaml(configfile, {**load_yaml(configfile), PROJECT_KEY: "diagnostics"})  # pretend another project is active
-    assert _active_project(aqua.configdir) == "diagnostics"
+    assert _active_project(aqua.configdir) != PROJECT
 
     aqua("project", "set", PROJECT)
     assert _active_project(aqua.configdir) == PROJECT
@@ -86,9 +86,7 @@ def test_project_set_list_uninstall(aqua, capsys):
 
 
 def test_project_update_remove(aqua):
-    if not _has_project_verbs():
-        pytest.skip(SKIP_VERBS)
-    aqua("install", "github", "--core", "--claima")
+    _install(aqua)
     shipped = os.path.join(aqua.configdir, "analysis", PROJECT, "config.aqua-analysis.yaml")
     user_file = os.path.join(aqua.configdir, "analysis", PROJECT, "my-config.yaml")
     with open(shipped, "w") as f:
@@ -104,4 +102,4 @@ def test_project_update_remove(aqua):
     for folder in PROJECT_FOLDERS:
         assert not os.path.exists(os.path.join(aqua.configdir, folder, PROJECT))
     assert not os.path.exists(os.path.join(aqua.configdir, "grids", "claima-example.yaml"))
-    assert _active_project(aqua.configdir) == "diagnostics"
+    assert _active_project(aqua.configdir) != PROJECT

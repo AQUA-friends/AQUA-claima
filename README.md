@@ -16,9 +16,9 @@ Work in progress: requires aqua-core 1.3.0 and aqua-diagnostics 0.27.0 (not rele
 
 ```bash
 mamba env create -f environment.yml          # or environment-dev.yml, with ../AQUA and ../AQUA-diagnostics
-aqua install <machine>                       # new installation, all projects found
-aqua project install claima                  # or: add claima to an existing installation (-e <path> for editable)
-aqua project set claima                      # make claima the active project
+aqua install <machine>                       # aqua-core and the diagnostics project (-c: aqua-core only)
+aqua project install claima                  # add claima and make it the active project (-e <path>: editable)
+aqua project set claima                      # switch back to claima later, e.g. after `aqua project set diagnostics`
 aqua analysis -p claima -c <catalog> -m <model> -e <exp> -s <source>
 ```
 
