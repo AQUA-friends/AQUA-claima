@@ -1,0 +1,46 @@
+# Configuration file for aqua-analysis, CLAIMA project.
+# Minimal example modelled on the aqua-diagnostics one.
+
+# Variables $AQUA_CORE, $AQUA_DIAGNOSTICS, $AQUA_CONFIG, $AQUA_PROJECT and $OUTPUT can be used to refer to
+# the directory of the AQUA-core module, the directory of the AQUA-diagnostics module,
+# the config directory (i.e. .aqua), the active project name and the output directory respectively.
+
+job:
+    max_threads: 0  # 0 or negative: no limit on parallel diagnostics
+    loglevel: "WARNING"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    run_setup_checker: true
+
+    # Default output directory, can be overridden by the command line arguments
+    outputdir: "./output"
+
+    # Default values, overridden from command line arguments
+    catalog: null
+    model: null
+    exp: null
+    source: "lra-r100-monthly"
+    regrid: null
+    startdate: null
+    enddate: null
+
+    script_path_base: "${AQUA_DIAGNOSTICS}"  # Base directory for the diagnostic scripts
+
+cluster:  # options for dask cluster
+    workers: 8
+    threads: 1  # per worker
+    memory_limit: 7GiB  # per worker
+    connect_timeout: 120  # seconds
+
+# List of available CLI tools (diagnostics)
+cli:
+  biases: "biases/cli_biases.py"
+  timeseries: "timeseries/cli_timeseries.py"
+
+run:
+    - ["atmosphere2d"]
+
+diagnostics:
+  atmosphere2d:
+    biases:
+      config: "${AQUA_CONFIG}/collections/${AQUA_PROJECT}/jinja/atmosphere2d/config-atmosphere2d-era5.j2"
+    timeseries:
+      config: "${AQUA_CONFIG}/collections/${AQUA_PROJECT}/jinja/atmosphere2d/config-atmosphere2d-era5.j2"
