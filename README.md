@@ -34,6 +34,18 @@ aqua analysis -p claima -c <catalog> -m <model> -e <exp> -s <source>
    collection to a `run` group.
 4. Add new tool keys to `KNOWN_DIAGNOSTIC_KEYS` in `tests/test_config_contract.py` and run the tests.
 
+## Preprocess DLESyM data
+
+DLESyM stores its HEALPix fields by base face (`face, height, width`, no coordinates), which AQUA cannot regrid nor average.
+`aqua.claima.preprocess.dlesym` rewrites the files with the cells in HEALPix nested order (values unchanged, same file tree),
+to be used in a catalog with `source_grid_name: hpz6-nested`:
+
+```bash
+python -m aqua.claima.preprocess.dlesym <archive>/DLESyM <output>/DLESyM
+```
+
+Files already in the output are skipped (`--overwrite` to convert them again).
+
 ## Tests
 
 ```bash
