@@ -9,3 +9,4 @@ All notable changes to aqua-claima are documented here.
 - Second collection `climate_metrics` (Gregory plot), legacy collections and the `claima-experiment-kind.yaml` experiment kinds (#2)
 - Config contract, install and analysis dry-run tests (#2)
 - CI workflows (tests in cross-check mode, PyPI, ruff, conda relock), dependabot, environment files, agent rules and contribution templates (#2)
+- `aqua.claima.preprocess.dlesym` rewrites DLESyM output in HEALPix nested order, readable with the `hpz6-nested` grid (#5)
