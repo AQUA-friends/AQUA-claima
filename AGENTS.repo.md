@@ -20,6 +20,7 @@ before editing collections or the analysis config. The name "project" is provisi
 | `aqua/claima/config/collections/{jinja,legacy}/<collection>/` | Collection configs, installed in `~/.aqua/collections/claima` |
 | `aqua/claima/config/tools/` | Tool static files, installed in `~/.aqua/tools/claima` |
 | `aqua/claima/config/grids/` | Extra files merged one by one into the flat `~/.aqua/grids`: names must not collide with core's (prefix `claima-`) |
+| `aqua/claima/preprocess/` | Tools rewriting datasets that AQUA cannot read as they are (DLESyM HEALPix faces) |
 | `tests/` | Contract, install and analysis dry-run tests (marker `claima`) |
 
 ## Rules
