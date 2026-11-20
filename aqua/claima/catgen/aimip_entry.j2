@@ -1,0 +1,30 @@
+{# Variables come in one file each: xarray_kwargs merge them without comparing or concatenating the coordinates #}
+{{ source }}:
+    description: {{ description | tojson }}
+    driver: netcdf
+    metadata:
+        source_grid_name: {{ grid | tojson }}
+    args:
+        urlpath:
+        {% for path in urlpath %}
+        - {{ path | tojson }}
+        {% endfor %}
+        chunks:
+            time: {{ time_chunk }}
+        xarray_kwargs:
+            decode_times: true
+            combine: by_coords
+            compat: override
+            coords: minimal
+            data_vars: minimal
+            {% if drop_variables %}
+            drop_variables: {{ drop_variables | tojson }}
+            {% endif %}
+    {% if members %}
+    parameters:
+        realization:
+            description: ensemble member
+            type: str
+            default: {{ members[0] }}
+            allowed: {{ members | tojson }}
+    {% endif %}

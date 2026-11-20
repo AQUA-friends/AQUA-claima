@@ -34,6 +34,21 @@ aqua analysis -p claima -c <catalog> -m <model> -e <exp> -s <source>
    collection to a `run` group.
 4. Add new tool keys to `KNOWN_DIAGNOSTIC_KEYS` in `tests/test_config_contract.py` and run the tests.
 
+## Generate the AIMIP catalog
+
+`aqua/claima/catgen/aimip.py` writes the `aimip` catalog of
+[Climate-DT-catalog](https://github.com/DestinE-Climate-DT/Climate-DT-catalog) from the content of the AIMIP archive
+on Levante, in the style of the `aqua catgen` generator of aqua-core. It scans the archive, so that each source points
+only to the current and readable version of each file: run it again after new data are uploaded.
+
+```bash
+cp aqua/claima/catgen/config-aimip.yaml .    # then set repos.Climate-DT-catalog_path
+python -m aqua.claima.catgen.aimip -c config-aimip.yaml
+```
+
+Models, grids, experiment names and the reference datasets are defined in the configuration file. `README.md` and
+`machine.yaml` of the catalog are not generated.
+
 ## Tests
 
 ```bash
