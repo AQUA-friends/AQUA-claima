@@ -1,0 +1,19 @@
+# Configuration file of the AQUA catalog generator for the output of aimip-claima: copy and edit it, then run
+#   python -m aqua.claima.catgen.aimip_claima -c claima-aimip-claima-config.yaml
+# The files to look for are defined in claima-aimip-claima.yaml, in the catgen folder of the
+# AQUA installation: any of its keys can be overridden here.
+
+author: CLAIMA
+machine: levante
+
+repos:
+  Climate-DT-catalog_path: /path/to/Climate-DT-catalog
+
+# folder of the catalog inside Climate-DT-catalog/catalogs
+catalog_dir: claima
+
+# folder containing the experiment folders (default of the CLAIMA_PATH intake parameter)
+archive_path: /scratch/m/m301120/claima-cf-conventions
+
+# experiment folders to include; all the folders of archive_path if null
+experiments: [aimip-claima-5y]

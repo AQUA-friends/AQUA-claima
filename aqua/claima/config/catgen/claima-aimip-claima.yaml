@@ -1,0 +1,30 @@
+# Definitions of the AQUA catalog generator for the output of aimip-claima (aqua.claima.catgen.aimip_claima).
+# Any key can be overridden in the generator configuration file.
+
+# AQUA source name: file to look for in each model folder (relative to it), description, number of time
+# steps in each dask chunk (time_chunk, default 1) and AQUA grid (grid, default lon-lat).
+# drop_variables lists variables to be ignored when opening the file.
+# The 3D fields are masked below the surface and on land, with a mask which changes with the level: this needs
+# the lon-lat-skipna grid, since lon-lat applies the mask of the first level to all the levels when regridding.
+# time_bnds is dropped because the field mean of a whole dataset fails on it.
+# Only the 3D files are listed for now: in monthly_mean_predictions.nc the member dimension comes before time.
+sources:
+  monthly-atm3d:
+    file: atmosphere/monthly_levels.nc
+    description: monthly 3D atmosphere data on pressure levels
+    time_chunk: 12
+    grid: lon-lat-skipna
+    drop_variables: [time_bnds]
+  monthly-oce3d:
+    file: ocean/monthly_thetao.nc
+    description: monthly 3D ocean data on depth levels
+    time_chunk: 12
+    grid: lon-lat-skipna
+    drop_variables: [time_bnds]
+
+# description of the experiments (folders of the archive); the name of the folder is used if missing
+descriptions:
+  aimip-claima-5y: 5-year test runs of aimip-claima, converted to the CF conventions
+
+# description of the models (folders of each experiment), replacing the "source" attribute of the files
+models: {}

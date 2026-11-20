@@ -4,6 +4,7 @@ All notable changes to aqua-claima are documented here.
 
 ## [Unreleased]
 
+- Catalog generator for the 3D output of aimip-claima, `python -m aqua.claima.catgen.aimip_claima` (#6)
 - Catalog generator for the AIMIP archive, `python -m aqua.claima.catgen.aimip` (#3)
 - First draft of the sphinx documentation, with the catalog generator (#3)
 - Minimal `aqua.claima` plugin package for the aqua-core plugin contract v2, with project `analysis`, `collections` and `tools` configuration and one extra grid (#1)

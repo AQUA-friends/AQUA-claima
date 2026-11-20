@@ -1,0 +1,14 @@
+{{ source }}:
+    description: {{ description | tojson }}
+    driver: netcdf
+    metadata:
+        source_grid_name: {{ grid | tojson }}
+    args:
+        urlpath: {{ urlpath | tojson }}
+        chunks:
+            time: {{ time_chunk }}
+        xarray_kwargs:
+            decode_times: true
+            {% if drop_variables %}
+            drop_variables: {{ drop_variables | tojson }}
+            {% endif %}

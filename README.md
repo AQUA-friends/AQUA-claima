@@ -52,9 +52,23 @@ experiment names and reference datasets (`claima-aimip.yaml`) are in `aqua/claim
 `~/.aqua/catgen`, where `aqua project install claima` puts them. Any definition can be overridden in the configuration
 file. `README.md` and `machine.yaml` of the catalog are not generated.
 
+## Generate the catalog of the aimip-claima output
+
+`aqua/claima/catgen/aimip_claima.py` does the same for the output of
+[aimip-claima](https://github.com/CliDyn/aimip-claima) converted to the CF conventions
+(`<experiment>/<model>/[<realm>/]<file>.nc`). It writes one source for each file listed in
+`claima-aimip-claima.yaml` which it finds in a model folder. For now these are only the 3D files
+(`monthly_levels.nc`, `monthly_thetao.nc`): in `monthly_mean_predictions.nc` the `member` dimension comes before
+`time`, and the generator refuses files with this structure.
+
+```bash
+cp ~/.aqua/catgen/claima-aimip-claima-config.yaml .    # then set repos.Climate-DT-catalog_path
+python -m aqua.claima.catgen.aimip_claima -c claima-aimip-claima-config.yaml
+```
+
 ## Documentation
 
-A first draft of the sphinx documentation is in `docs/sphinx`; for now it covers only the catalog generator.
+A first draft of the sphinx documentation is in `docs/sphinx`; for now it covers only the catalog generators.
 
 ```bash
 pip install -e .[docs]
