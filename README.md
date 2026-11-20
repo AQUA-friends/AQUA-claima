@@ -8,7 +8,8 @@ the CLAIMA configuration (analysis, collections, tools and extra grids) and runs
 entry point `claima` (plugin contract v2). The name "project" is provisional in aqua-core.
 
 At install time aqua-core copies (or links, in editable mode) the `analysis`, `collections` and `tools` folders into
-`~/.aqua/<folder>/claima`, and merges the files in `grids` into the flat `~/.aqua/grids`.
+`~/.aqua/<folder>/claima`, and merges the files in `grids` and `catgen` into the flat `~/.aqua/grids` and
+`~/.aqua/catgen`.
 
 ## Install
 
@@ -42,12 +43,14 @@ on Levante, in the style of the `aqua catgen` generator of aqua-core. It scans t
 only to the current and readable version of each file: run it again after new data are uploaded.
 
 ```bash
-cp aqua/claima/catgen/config-aimip.yaml .    # then set repos.Climate-DT-catalog_path
-python -m aqua.claima.catgen.aimip -c config-aimip.yaml
+cp ~/.aqua/catgen/claima-aimip-config.yaml .    # then set repos.Climate-DT-catalog_path
+python -m aqua.claima.catgen.aimip -c claima-aimip-config.yaml
 ```
 
-Models, grids, experiment names and the reference datasets are defined in the configuration file. `README.md` and
-`machine.yaml` of the catalog are not generated.
+As for the aqua-core `catgen`, the entry template (`claima-aimip-entry.j2`) and the definitions of models, grids,
+experiment names and reference datasets (`claima-aimip.yaml`) are in `aqua/claima/config/catgen/` and are read from
+`~/.aqua/catgen`, where `aqua project install claima` puts them. Any definition can be overridden in the configuration
+file. `README.md` and `machine.yaml` of the catalog are not generated.
 
 ## Tests
 

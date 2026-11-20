@@ -5,8 +5,10 @@ import os
 
 import netCDF4
 import pytest
+from conftest import CONFIG_ROOT
 
 from aqua.claima.catgen import AimipCatalogGenerator
+from aqua.core.configurer import ConfigContext
 from aqua.core.util import dump_yaml, load_yaml
 
 pytestmark = pytest.mark.claima
@@ -31,7 +33,17 @@ def _write(archive, exp, member, var, version, period="197810-197812", dims=("ti
 
 
 @pytest.fixture
-def generator(tmp_path):
+def configcontext(tmp_path):
+    """AQUA configuration folder with the catgen files shipped by aqua-claima."""
+    configdir = os.path.join(tmp_path, "aqua")
+    os.makedirs(configdir)
+    dump_yaml(os.path.join(configdir, "config-aqua.yaml"), {"machine": "test"})
+    os.symlink(os.path.join(CONFIG_ROOT, "catgen"), os.path.join(configdir, "catgen"))
+    return ConfigContext(configdir=configdir)
+
+
+@pytest.fixture
+def generator(tmp_path, configcontext):
     """Generator on an archive with a re-uploaded file (r2), an unreadable one (r3) and a renamed experiment."""
     archive = os.path.join(tmp_path, "archive")
     for member in ("r1i1p1f1", "r2i1p1f1", "r3i1p1f1"):
@@ -64,7 +76,7 @@ def generator(tmp_path):
     }
     config_path = os.path.join(tmp_path, "config.yaml")
     dump_yaml(config_path, config)
-    return AimipCatalogGenerator(config_path=config_path, loglevel="ERROR")
+    return AimipCatalogGenerator(config_path=config_path, configcontext=configcontext, loglevel="ERROR")
 
 
 def test_sources_select_current_readable_files(generator):
@@ -125,9 +137,19 @@ def test_inventory_is_saved_and_reused(generator):
     assert generator.get_inventory() == inventory
 
 
-def test_missing_configuration_key(tmp_path):
+def test_missing_configuration_key(tmp_path, configcontext):
     """Fails if a configuration without the archive path is accepted."""
     config_path = os.path.join(tmp_path, "config.yaml")
-    dump_yaml(config_path, {"machine": "test", "catalog_dir": "aimip", "models": {"MOD": {}}})
+    dump_yaml(config_path, {"machine": "test", "catalog_dir": "aimip"})
     with pytest.raises(ValueError, match="archive_path, repos.Climate-DT-catalog_path"):
-        AimipCatalogGenerator(config_path=config_path)
+        AimipCatalogGenerator(config_path=config_path, configcontext=configcontext)
+
+
+def test_shipped_definitions(configcontext, tmp_path):
+    """Fails if the shipped definitions and sample configuration do not make a complete configuration."""
+    generator = AimipCatalogGenerator(
+        config_path=os.path.join(CONFIG_ROOT, "catgen", "claima-aimip-config.yaml"), configcontext=configcontext
+    )
+    assert generator.config["models"]["cBottle-1-3"]["grid"] == "hpz6-ring"
+    assert generator.config["experiments"]["aimip-2k"] == "aimip-p2k"
+    assert generator.catalog_dir == os.path.join("/path/to/Climate-DT-catalog", "catalogs", "aimip")

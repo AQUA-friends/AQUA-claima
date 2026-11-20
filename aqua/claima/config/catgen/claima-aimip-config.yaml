@@ -1,0 +1,19 @@
+# Configuration file of the AQUA catalog generator for the AIMIP archive: copy and edit it, then run
+#   python -m aqua.claima.catgen.aimip -c claima-aimip-config.yaml
+# Models, experiments and reference datasets are defined in claima-aimip.yaml, in the catgen folder of the
+# AQUA installation: any of its keys can be overridden here.
+
+author: CLAIMA
+machine: levante
+
+repos:
+  Climate-DT-catalog_path: /path/to/Climate-DT-catalog
+
+# folder of the catalog inside Climate-DT-catalog/catalogs
+catalog_dir: aimip
+
+# root folder of the archive (default of the AIMIP_PATH intake parameter)
+archive_path: /work/ab0995/a270088/AIMIP/minio_copy/ai-mip
+
+# optional JSON file to save the scan of the archive, and to read it back instead of scanning again
+inventory: null

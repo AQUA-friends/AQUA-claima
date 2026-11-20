@@ -60,8 +60,6 @@ include = ["aqua*"]
 [tool.setuptools.package-data]
 "aqua" = [
     "claima/config/**/*",
-    "claima/catgen/*.j2",
-    "claima/catgen/*.yaml",
 ]
 
 [tool.setuptools.dynamic]

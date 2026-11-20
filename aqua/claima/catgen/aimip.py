@@ -9,11 +9,15 @@ variable, in a CMIP-like tree (experiment/member/table/variable/grid/version).
 The generator scans it and writes one AQUA catalog entry for each experiment, so
 that every source points only to the current and readable version of each file.
 
+The entry template and the definitions of models, experiments and reference datasets
+are read from the catgen folder of the AQUA installation, where `aqua project install claima`
+puts them (claima-aimip-entry.j2, claima-aimip.yaml).
+
 Usage:
-    python -m aqua.claima.catgen.aimip -c config-aimip.yaml
+    python -m aqua.claima.catgen.aimip -c claima-aimip-config.yaml
 
 or, from python:
-    AimipCatalogGenerator(config_path="config-aimip.yaml").generate_catalog()
+    AimipCatalogGenerator(config_path="claima-aimip-config.yaml").generate_catalog()
 """
 
 import argparse
@@ -24,11 +28,11 @@ import sys
 
 import netCDF4
 
+from aqua.core.configurer import ConfigContext
 from aqua.core.lock import SafeFileLock
 from aqua.core.logger import log_configure
 from aqua.core.util import dump_yaml, get_arg, load_yaml
 
-CATGEN_DIR = os.path.dirname(os.path.abspath(__file__))
 INTAKE_PATH = "{{AIMIP_PATH}}"
 FREQUENCIES = {"Amon": "monthly", "day": "daily"}
 VERTICAL_DIMS = {"plev", "model_layer"}
@@ -37,20 +41,27 @@ VERTICAL_DIMS = {"plev", "model_layer"}
 class AimipCatalogGenerator:
     """Class for generating the AQUA catalog entries of the AIMIP archive."""
 
-    def __init__(self, config_path: str | None = None, loglevel: str = "INFO"):
+    def __init__(self, config_path: str, configcontext: ConfigContext | None = None, loglevel: str = "INFO"):
         """
         Initialize the generator with the specified configuration.
 
         Args:
-            config_path (str, optional): Path to the configuration YAML file. Defaults to the
-                                         ``config-aimip.yaml`` shipped with aqua-claima.
+            config_path (str): Path to the configuration YAML file.
+            configcontext (ConfigContext, optional): An instance of ConfigContext for configuration management.
+                                                     Defaults to None.
             loglevel (str, optional): Logging level. Defaults to "INFO".
         """
         self.loglevel = loglevel
         self.logger = log_configure(self.loglevel, "AIMIP catalog generator")
 
-        self.config = load_yaml(config_path or os.path.join(CATGEN_DIR, "config-aimip.yaml"))
-        self.template = os.path.join(CATGEN_DIR, "aimip_entry.j2")
+        # get the template and the definitions from the AQUA installation
+        configcontext = configcontext or ConfigContext()
+        self.catgendir = configcontext.get_folder("catgen")
+        self.logger.debug("Reading configuration files from %s", self.catgendir)
+        self.template = os.path.join(self.catgendir, "claima-aimip-entry.j2")
+
+        # the configuration file can override the definitions
+        self.config = {**load_yaml(os.path.join(self.catgendir, "claima-aimip.yaml")), **load_yaml(config_path)}
 
         required_keys = ["machine", "archive_path", "catalog_dir", "models"]
         missing = [k for k in required_keys if not self.config.get(k)]
@@ -312,19 +323,19 @@ def aimip_parser(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(description="AQUA catalog generator for the AIMIP archive")
 
-    parser.add_argument("-c", "--config", type=str, help="yaml configuration file")
+    parser.add_argument("-c", "--config", type=str, help="yaml configuration file", required=True)
     parser.add_argument("-l", "--loglevel", type=str, help="loglevel", default="INFO")
 
     return parser
 
 
-def aimip_execute(args):
+def aimip_execute(args, configcontext=None):
     """Useful wrapper for the AIMIP catalog generator class"""
 
-    config_file = get_arg(args, "config", None)
+    config_file = get_arg(args, "config", "config.yaml")
     loglevel = get_arg(args, "loglevel", "INFO")
 
-    generator = AimipCatalogGenerator(config_path=config_file, loglevel=loglevel)
+    generator = AimipCatalogGenerator(config_path=config_file, loglevel=loglevel, configcontext=configcontext)
     generator.generate_catalog()
 
 
