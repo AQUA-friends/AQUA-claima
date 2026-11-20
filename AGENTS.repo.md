@@ -20,7 +20,7 @@ before editing collections or the analysis config. The name "project" is provisi
 | `aqua/claima/config/collections/{jinja,legacy}/<collection>/` | Collection configs, installed in `~/.aqua/collections/claima` |
 | `aqua/claima/config/tools/` | Tool static files, installed in `~/.aqua/tools/claima` |
 | `aqua/claima/config/grids/` | Extra files merged one by one into the flat `~/.aqua/grids`: names must not collide with core's (prefix `claima-`) |
-| `aqua/claima/catgen/` | Catalog generators for CLAIMA data, run with `python -m` (e.g. `aimip.py` for the AIMIP archive) |
+| `aqua/claima/catgen/` | Catalog generators for CLAIMA data, run with `python -m` (`aimip.py` for the AIMIP archive, `aimip_claima.py` for the output of aimip-claima; shared code in `util.py`) |
 | `aqua/claima/config/catgen/` | Entry templates, definitions and sample configurations of the catalog generators, merged one by one into the flat `~/.aqua/catgen` (prefix `claima-`) |
 | `docs/sphinx/` | Sphinx documentation (`pip install -e .[docs]`, then `make html` in `docs/sphinx`) |
 | `tests/` | Contract, install and analysis dry-run tests (marker `claima`) |

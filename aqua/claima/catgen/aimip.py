@@ -29,9 +29,10 @@ import sys
 import netCDF4
 
 from aqua.core.configurer import ConfigContext
-from aqua.core.lock import SafeFileLock
 from aqua.core.logger import log_configure
-from aqua.core.util import dump_yaml, get_arg, load_yaml
+from aqua.core.util import get_arg, load_yaml
+
+from .util import write_catalog_entry
 
 INTAKE_PATH = "{{AIMIP_PATH}}"
 FREQUENCIES = {"Amon": "monthly", "day": "daily"}
@@ -255,39 +256,15 @@ class AimipCatalogGenerator:
             sources (dict): The sources of the experiment.
             description (str): The description of the experiment.
         """
-        output_dir = os.path.join(self.catalog_dir, "catalog", model)
-        dump_yaml(os.path.join(output_dir, f"{exp}.yaml"), {"sources": sources})
-        self.logger.info("File %s.yaml has been created in %s", exp, output_dir)
-
-        # Update main.yaml
-        main_yaml_path = os.path.join(output_dir, "main.yaml")
-        with SafeFileLock(main_yaml_path + ".lock", loglevel=self.loglevel):
-            main_yaml = load_yaml(main_yaml_path) if os.path.exists(main_yaml_path) else {"sources": {}}
-            main_yaml["sources"][exp] = {
-                "description": description,
-                "driver": "yaml_file_cat",
-                "args": {"path": f"{{{{CATALOG_DIR}}}}/{exp}.yaml"},
-            }
-            dump_yaml(main_yaml_path, main_yaml)
-
-        # Update catalog.yaml, creating it if this is a new catalog
-        catalog_yaml_path = os.path.join(self.catalog_dir, "catalog.yaml")
-        with SafeFileLock(catalog_yaml_path + ".lock", loglevel=self.loglevel):
-            if os.path.exists(catalog_yaml_path):
-                catalog_yaml = load_yaml(catalog_yaml_path, jinja=False)
-            else:
-                parameter = {
-                    "type": "str",
-                    "description": "the path to the AIMIP archive on the local machine",
-                    "default": self.archive,
-                }
-                catalog_yaml = {"metadata": {"parameters": {"AIMIP_PATH": parameter}}, "sources": {}}
-            catalog_yaml["sources"][model] = {
-                "description": model_description,
-                "driver": "yaml_file_cat",
-                "args": {"path": f"{{{{CATALOG_DIR}}}}/catalog/{model}/main.yaml"},
-            }
-            dump_yaml(catalog_yaml_path, catalog_yaml)
+        parameter = {
+            "type": "str",
+            "description": "the path to the AIMIP archive on the local machine",
+            "default": self.archive,
+        }
+        write_catalog_entry(
+            self.catalog_dir, model, model_description, exp, sources, description, {"AIMIP_PATH": parameter}, self.loglevel
+        )
+        self.logger.info("File %s.yaml has been created in %s", exp, os.path.join(self.catalog_dir, "catalog", model))
 
     def generate_catalog(self):
         """

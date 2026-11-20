@@ -61,9 +61,10 @@ def test_install_layout(aqua, editable):
         os.path.join(aqua.configdir, "collections", PROJECT, "jinja", "atmosphere2d", "config-atmosphere2d-era5.j2")
     )
     assert not os.path.exists(os.path.join(aqua.configdir, "catgen", PROJECT)), "catgen is not project-scoped"
-    entry = os.path.join(aqua.configdir, "catgen", "claima-aimip-entry.j2")
-    assert os.path.isfile(entry), "catgen files are merged into the flat aqua-core folder"
-    assert os.path.islink(entry) == editable
+    for name in ("claima-aimip-entry.j2", "claima-aimip-claima-entry.j2"):
+        entry = os.path.join(aqua.configdir, "catgen", name)
+        assert os.path.isfile(entry), "catgen files are merged into the flat aqua-core folder"
+        assert os.path.islink(entry) == editable
     assert _active_project(aqua.configdir) == PROJECT
 
     grid = os.path.join(aqua.configdir, "grids", "claima-example.yaml")
