@@ -52,6 +52,15 @@ experiment names and reference datasets (`claima-aimip.yaml`) are in `aqua/claim
 `~/.aqua/catgen`, where `aqua project install claima` puts them. Any definition can be overridden in the configuration
 file. `README.md` and `machine.yaml` of the catalog are not generated.
 
+## Documentation
+
+A first draft of the sphinx documentation is in `docs/sphinx`; for now it covers only the catalog generator.
+
+```bash
+pip install -e .[docs]
+cd docs/sphinx && make html                  # pages in docs/sphinx/build/html
+```
+
 ## Tests
 
 ```bash

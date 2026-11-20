@@ -40,6 +40,10 @@ tests = [
     "dvc>3.60.0",
     "dvc-s3"
 ]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme"
+]
 style = [
     "pre-commit",
     "ruff==0.17.4"
