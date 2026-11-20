@@ -20,6 +20,9 @@ before editing collections or the analysis config. The name "project" is provisi
 | `aqua/claima/config/collections/{jinja,legacy}/<collection>/` | Collection configs, installed in `~/.aqua/collections/claima` |
 | `aqua/claima/config/tools/` | Tool static files, installed in `~/.aqua/tools/claima` |
 | `aqua/claima/config/grids/` | Extra files merged one by one into the flat `~/.aqua/grids`: names must not collide with core's (prefix `claima-`) |
+| `aqua/claima/catgen/` | Catalog generators for CLAIMA data, run with `python -m` (e.g. `aimip.py` for the AIMIP archive) |
+| `aqua/claima/config/catgen/` | Entry templates, definitions and sample configurations of the catalog generators, merged one by one into the flat `~/.aqua/catgen` (prefix `claima-`) |
+| `docs/sphinx/` | Sphinx documentation (`pip install -e .[docs]`, then `make html` in `docs/sphinx`) |
 | `tests/` | Contract, install and analysis dry-run tests (marker `claima`) |
 
 ## Rules
@@ -27,7 +30,7 @@ before editing collections or the analysis config. The name "project" is provisi
 - Analysis configs refer to files with `${AQUA_CONFIG}/<folder>/${AQUA_PROJECT}/...`, never with a hard-coded project name
 - Every collection exists in `jinja/` (rendered with each kind of `claima-experiment-kind.yaml`) and `legacy/` (fixed dates)
 - A new tool key in a collection must be added to `KNOWN_DIAGNOSTIC_KEYS` in `tests/test_config_contract.py`
-- `catgen` is not shipped: it stays a flat aqua-core folder
+- `catgen` stays a flat aqua-core folder, never project-scoped: the files of `aqua/claima/config/catgen/` are merged into it as `files`, and the generators read them with `ConfigContext.get_folder("catgen")`, as the aqua-core `catgen` does
 - Every test module has `pytestmark = pytest.mark.claima`; tests needing aqua-diagnostics or unreleased aqua-core verbs skip with a reason
 - Every PR adds one short line under `## [Unreleased]` in `CHANGELOG.md`, citing the PR
 

@@ -1,0 +1,115 @@
+# Definitions of the AQUA catalog generator for the AIMIP archive (aqua.claima.catgen.aimip):
+# models, experiments and reference datasets. Any key can be overridden in the generator configuration file.
+
+# number of time steps in each dask chunk
+time_chunks:
+  monthly: 12
+  daily: 30
+
+# AQUA model name: folder in the archive (base), AQUA grid and description
+models:
+  ACE2-1-ERA5:
+    base: Ai2/ACE2-1-ERA5
+    grid: lon-lat
+    description: ACE2.1-ERA5 AI climate emulator (Ai2)
+  ArchesWeather-V2:
+    base: ArchesWeather/ArchesWeather-V2
+    grid: lon-lat
+    description: ArchesWeather-V2 AI model (ArchesWeather)
+  ArchesWeatherGen-V2:
+    base: ArchesWeather/ArchesWeatherGen-V2
+    grid: lon-lat
+    description: ArchesWeatherGen-V2 generative AI model (ArchesWeather)
+  DLESyM:
+    base: DLESyM/DLESyM
+    grid: false  # HEALPix nside=64 stored by face, with no AQUA grid available: no regridding
+    description: DLESyM AI Earth system model (University of Washington)
+  NeuralGCM:
+    base: Google/NeuralGCM
+    grid: lon-lat
+    description: NeuralGCM hybrid AI model, TL63 (Google)
+  NeuralGCM-HRD:
+    base: Google/NeuralGCM-HRD
+    grid: lon-lat
+    description: NeuralGCM-HRD hybrid AI model, decoded at 1 degree (Google)
+  cBottle-1-3:
+    base: NVIDIA/CMIP6/AIMIP/NVIDIA/cBottle-1-3
+    grid: hpz6-ring
+    drop_variables: [crs]
+    description: cBottle 1.3 generative AI model, HEALPix nside=64 (NVIDIA)
+  MD-1p5:
+    base: UMD-PARETO/MD-1p5
+    grid: lon-lat
+    description: MD-1p5 AI model (UMD-PARETO)
+  MPI-ESM1-2-LR:
+    base: MPI-M/MPI-ESM1-2-LR
+    grid: lon-lat
+    description: MPI-ESM1.2-LR physical model, CMIP6 reference (MPI-M)
+
+# AQUA experiment name of the experiment folders named differently (<folder> or <model>/<folder>)
+experiments:
+  aimip-2k: aimip-p2k
+  aimip-4k: aimip-p4k
+  MPI-ESM1-2-LR/aimip: amip
+
+# description of the AQUA experiments
+descriptions:
+  aimip: AIMIP simulation forced by observed SST and sea ice
+  aimip-p2k: AIMIP simulation with SST uniformly increased by 2 K
+  aimip-p4k: AIMIP simulation with SST uniformly increased by 4 K
+  amip: CMIP6 AMIP simulation
+
+# Reference datasets: few flat files, described by hand (urlpath relative to archive_path)
+references:
+  ERA5:
+    description: ERA5 reanalysis, reference for AIMIP
+    experiments:
+      era5:
+        description: "ERA5 monthly means: 1 degree AIMIP evaluation set (1978-2024) and 0.25 degree fields (1940-2024)"
+        sources:
+          monthly-atm2d:
+            description: monthly 2D data at 1 degree, CMOR names (1978-2024)
+            time_chunk: 12
+            urlpath:
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_pr_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_ps_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_psl_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_tas_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_ts_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_uas_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_vas_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Emon_tdps_1978-2024.nc
+          monthly-atm3d:
+            description: monthly 3D data at 1 degree on 8 pressure levels, CMOR names (1978-2024)
+            time_chunk: 12
+            urlpath:
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_hus_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_ta_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_ua_1978-2024.nc
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_va_1978-2024.nc
+          monthly-atm3d-zg:
+            description: monthly geopotential height at 1 degree on 37 pressure levels (1978-2024)
+            time_chunk: 12
+            urlpath:
+              - ERA5/mon_1deg/native6_ERA5_*_v1_Amon_zg_1978-2024.nc
+          monthly-r025-atm2d:
+            description: monthly 2D data at 0.25 degree, ERA5 names (1940-2024)
+            time_chunk: 1
+            urlpath:
+              - ERA5/mon/ERA5_*_mon_full_sfc_1940-2024.nc
+          monthly-r025-atm3d:
+            description: monthly 3D data at 0.25 degree on 8 pressure levels, ERA5 names (1940-2024)
+            time_chunk: 1
+            urlpath:
+              - ERA5/mon/ERA5_*_mon_full_plev8_1940-2024.nc
+  GPCP-SG:
+    description: GPCP-SG precipitation, reference for AIMIP
+    experiments:
+      v2.3:
+        description: GPCP-SG v2.3 monthly precipitation interpolated to 1 degree
+        sources:
+          monthly:
+            description: monthly precipitation at 1 degree (1979-2024)
+            time_chunk: 12
+            urlpath:
+              - GPCP-SG/OBS_GPCP-SG_atmos_2.3_Amon_pr_1979-2024.nc

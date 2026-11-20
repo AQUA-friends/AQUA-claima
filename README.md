@@ -8,7 +8,8 @@ the CLAIMA configuration (analysis, collections, tools and extra grids) and runs
 entry point `claima` (plugin contract v2). The name "project" is provisional in aqua-core.
 
 At install time aqua-core copies (or links, in editable mode) the `analysis`, `collections` and `tools` folders into
-`~/.aqua/<folder>/claima`, and merges the files in `grids` into the flat `~/.aqua/grids`.
+`~/.aqua/<folder>/claima`, and merges the files in `grids` and `catgen` into the flat `~/.aqua/grids` and
+`~/.aqua/catgen`.
 
 ## Install
 
@@ -33,6 +34,32 @@ aqua analysis -p claima -c <catalog> -m <model> -e <exp> -s <source>
    `diagnostics` with `config: "${AQUA_CONFIG}/collections/${AQUA_PROJECT}/jinja/<collection>/<file>.j2"`, and the
    collection to a `run` group.
 4. Add new tool keys to `KNOWN_DIAGNOSTIC_KEYS` in `tests/test_config_contract.py` and run the tests.
+
+## Generate the AIMIP catalog
+
+`aqua/claima/catgen/aimip.py` writes the `aimip` catalog of
+[Climate-DT-catalog](https://github.com/DestinE-Climate-DT/Climate-DT-catalog) from the content of the AIMIP archive
+on Levante, in the style of the `aqua catgen` generator of aqua-core. It scans the archive, so that each source points
+only to the current and readable version of each file: run it again after new data are uploaded.
+
+```bash
+cp ~/.aqua/catgen/claima-aimip-config.yaml .    # then set repos.Climate-DT-catalog_path
+python -m aqua.claima.catgen.aimip -c claima-aimip-config.yaml
+```
+
+As for the aqua-core `catgen`, the entry template (`claima-aimip-entry.j2`) and the definitions of models, grids,
+experiment names and reference datasets (`claima-aimip.yaml`) are in `aqua/claima/config/catgen/` and are read from
+`~/.aqua/catgen`, where `aqua project install claima` puts them. Any definition can be overridden in the configuration
+file. `README.md` and `machine.yaml` of the catalog are not generated.
+
+## Documentation
+
+A first draft of the sphinx documentation is in `docs/sphinx`; for now it covers only the catalog generator.
+
+```bash
+pip install -e .[docs]
+cd docs/sphinx && make html                  # pages in docs/sphinx/build/html
+```
 
 ## Tests
 

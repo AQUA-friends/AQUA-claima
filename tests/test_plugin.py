@@ -11,7 +11,13 @@ pytestmark = pytest.mark.claima
 
 CONFIG_ROOT = Path(aqua.claima.__file__).parent / "config"
 
-EXPECTED = {"contract": 2, "config": ["analysis", "collections", "tools"], "flat": [], "templates": [], "files": ["grids"]}
+EXPECTED = {
+    "contract": 2,
+    "config": ["analysis", "collections", "tools"],
+    "flat": [],
+    "templates": [],
+    "files": ["grids", "catgen"],
+}
 
 
 @pytest.fixture

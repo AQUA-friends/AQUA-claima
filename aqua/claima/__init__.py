@@ -10,7 +10,7 @@ MIN_AQUA_CORE = "1.2.4"
 
 PLUGIN_CONTRACT = 2
 CONFIG_DIRECTORIES = ["analysis", "collections", "tools"]
-FILE_DIRECTORIES = ["grids"]
+FILE_DIRECTORIES = ["grids", "catgen"]
 
 __all__ = ["__version__", "MIN_AQUA_CORE", "get_install_dirs"]
 
